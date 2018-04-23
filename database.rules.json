@@ -3,7 +3,7 @@
     ".read": "true",
     ".write": "true",
     "messages": {
-      ".indexOn": ".value"
+      ".indexOn": "time"
     }
   }
 }

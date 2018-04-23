@@ -5,7 +5,6 @@ import {
   Col,
   Button,
   Row,
-  Jumbotron,
   FormControl,
   FormGroup,
   ControlLabel,
@@ -14,6 +13,10 @@ import {
 } from 'react-bootstrap';
 import fire from '../fire';
 import moment from 'moment';
+import Message from '../utils/Message';
+import './Team.css';
+import Jumbo from '../Components/jumbo';
+import Messages from '../Components/Messages';
 
 class Team extends Component {
   state = {
@@ -47,24 +50,8 @@ class Team extends Component {
         id: snapshot.key
       };
       let usersLoggedIn = [...this.state.usersLoggedIn];
-      usersLoggedIn.push(newUser);
+      usersLoggedIn.unshift(newUser);
       this.setState({ usersLoggedIn });
-    });
-    let messagesRef = fire
-      .database()
-      .ref('/messages')
-      .orderByChild('time')
-      .limitToLast(15);
-    messagesRef.on('child_added', snapshot => {
-      let newMessage = {
-        user: snapshot.val().name,
-        time: snapshot.val().time,
-        text: snapshot.val().text
-      };
-      console.log('newmsg', newMessage);
-      let messages = [...this.state.messages];
-      messages.push(newMessage);
-      this.setState({ messages });
     });
   }
   componentDidMount() {
@@ -73,11 +60,11 @@ class Team extends Component {
       .ref('/users/' + this.state.currentUser.id)
       .onDisconnect()
       .remove(() => {
-        let newMessage = {
-          text: 'User has disconnected.',
-          name: 'System' || this.state.currentUser.name,
-          time: Date.now()
-        };
+        let newMessage = new Message('User has disconnected.', 'System');
+        //   text: ,
+        //   name: 'System' || this.state.currentUser.name,
+        //   time: Date.now()
+        // };
         fire
           .database()
           .ref('/messages')
@@ -97,8 +84,22 @@ class Team extends Component {
       .push(this.state.modalUser).key;
     let currentUser = { ...this.state.modalUser };
     currentUser.id = newKey;
-    this.setState({ renderModal: false, currentUser }, function() {
-      this.setState({ modalUser: { name: '', xbox: '' } });
+    this.setState({ renderModal: false, currentUser }, () => {
+      let tempMessage = this.state.currentUser.name + ' has connected.';
+      let newMsg = {
+        text: tempMessage,
+        user: 'System',
+        time: Date.now()
+      };
+      if (newMsg) {
+        fire
+          .database()
+          .ref('/messages')
+          .push(newMsg);
+        this.setState({ modalUser: { name: '', xbox: '' } });
+      } else {
+        console.log('newMsg empty');
+      }
     });
   };
 
@@ -116,80 +117,35 @@ class Team extends Component {
   messageChangeHandler = event => {
     this.setState({ currentMessage: event.target.value });
   };
-  messageSubmit = event => {
-    event.preventDefault();
-    let newMessage = {
-      text: this.state.currentMessage,
-      name: this.state.currentUser.name,
-      time: Date.now()
-    };
-    console.log(newMessage);
-    fire
-      .database()
-      .ref('/messages')
-      .push(newMessage)
-      .then(() => {
-        this.setState({ currentMessage: '' });
-      });
-  };
+
   render() {
     return (
       <Grid>
         <Row>
           <Grid>
-            <Jumbotron>
-              <h1> Hello User. </h1>
-
-              <Button bsStyle="info" bsSize="lg" onClick={this.clickHandler}>
-                Trigger
-              </Button>
-              <p> Current Users Logged In: {this.state.usersLoggedIn.length}</p>
-            </Jumbotron>
+            <Jumbo
+              currentUser={this.state.currentUser}
+              users={this.state.usersLoggedIn.length}
+            />
             <Row>
               <Col md={6} xs={12}>
                 <Well>
-                  {this.state.usersLoggedIn.map(item => {
-                    return (
-                      <Panel key={item.id}>
-                        <p>
-                          User Name: {item.user} Xbox Name: {item.xboxID}{' '}
-                        </p>
-                      </Panel>
-                    );
-                  })}
-                </Well>
-              </Col>
-              <Col md={6} xs={12}>
-                <Well>
                   <Panel>
-                    <FormGroup>
-                      <ControlLabel>Write a message!</ControlLabel>
-                      <FormControl
-                        type="text"
-                        value={this.state.currentMessage}
-                        placeholder="Enter Message"
-                        onChange={this.messageChangeHandler}
-                      />
-                      <Button onClick={this.messageSubmit}> Send it!</Button>
-                    </FormGroup>
-                  </Panel>
-                  <Panel>
-                    {this.state.messages
-                      ? this.state.messages.map((message, index) => {
-                          return (
-                            <p key={index}>
-                              <strong> {message.user} </strong>
-                              {message.text}
-                              <br />
-                              <i>
-                                {moment(message.time).format(
-                                  'HH:mm:SS MM/DD/YYYY'
-                                )}
-                              </i>
+                    <Panel.Heading>
+                      <p>Users Online</p>
+                    </Panel.Heading>
+                    <Panel.Body>
+                      {this.state.usersLoggedIn.map(item => {
+                        return (
+                          <div key={item.id}>
+                            <p>
+                              <strong> {item.user}</strong> Xbox Name:{' '}
+                              {item.xboxID}
                             </p>
-                          );
-                        })
-                      : null}
+                          </div>
+                        );
+                      })}
+                    </Panel.Body>
                   </Panel>
                 </Well>
               </Col>
