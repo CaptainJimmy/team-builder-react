@@ -1,22 +1,12 @@
 import React, { Component } from 'react';
-import {
-  Modal,
-  Grid,
-  Col,
-  Button,
-  Row,
-  FormControl,
-  FormGroup,
-  ControlLabel,
-  Well,
-  Panel
-} from 'react-bootstrap';
+import { Grid, Row } from 'react-bootstrap';
 import fire from '../fire';
-import moment from 'moment';
-import Message from '../utils/Message';
 import './Team.css';
 import Jumbo from '../Components/jumbo';
 import Messages from '../Components/Messages';
+import UsersOnline from '../Components/Users';
+import Login from '../Components/Login';
+import style from './style';
 
 class Team extends Component {
   state = {
@@ -31,9 +21,7 @@ class Team extends Component {
     modalUser: {
       name: '',
       xbox: ''
-    },
-    currentMessage: '',
-    messages: []
+    }
   };
 
   componentWillMount() {
@@ -60,11 +48,11 @@ class Team extends Component {
       .ref('/users/' + this.state.currentUser.id)
       .onDisconnect()
       .remove(() => {
-        let newMessage = new Message('User has disconnected.', 'System');
-        //   text: ,
-        //   name: 'System' || this.state.currentUser.name,
-        //   time: Date.now()
-        // };
+        let newMessage = {
+          text: 'User has disconnected.',
+          name: 'System',
+          time: Date.now()
+        };
         fire
           .database()
           .ref('/messages')
@@ -114,13 +102,9 @@ class Team extends Component {
     this.setState({ modalUser });
   };
 
-  messageChangeHandler = event => {
-    this.setState({ currentMessage: event.target.value });
-  };
-
   render() {
     return (
-      <Grid>
+      <Grid style={style.team}>
         <Row>
           <Grid>
             <Jumbo
@@ -128,58 +112,18 @@ class Team extends Component {
               users={this.state.usersLoggedIn.length}
             />
             <Row>
-              <Col md={6} xs={12}>
-                <Well>
-                  <Panel>
-                    <Panel.Heading>
-                      <p>Users Online</p>
-                    </Panel.Heading>
-                    <Panel.Body>
-                      {this.state.usersLoggedIn.map(item => {
-                        return (
-                          <div key={item.id}>
-                            <p>
-                              <strong> {item.user}</strong> Xbox Name:{' '}
-                              {item.xboxID}
-                            </p>
-                          </div>
-                        );
-                      })}
-                    </Panel.Body>
-                  </Panel>
-                </Well>
-              </Col>
+              <UsersOnline usersLoggedIn={this.state.usersLoggedIn} />
+              <Messages currentUser={this.state.currentUser} />
             </Row>
           </Grid>
         </Row>
-        <Modal show={this.state.renderModal}>
-          <Modal.Header closeButton>
-            <Modal.Title> Enter Your Info To Join The Event </Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <form onSubmit={this.submitHandler}>
-              <FormGroup>
-                <ControlLabel>Enter Your Gamer ID</ControlLabel>
-                <FormControl
-                  type="text"
-                  value={this.state.modalUser.name}
-                  placeholder="Enter ID"
-                  onChange={this.nameHandler}
-                />
-                <ControlLabel>Enter Your Xbox ID</ControlLabel>
-                <FormControl
-                  type="text"
-                  value={this.state.modalUser.xbox}
-                  placeholder="Enter ID"
-                  onChange={this.xboxHandler}
-                />
-                <Button type="submit" bsSize="large" bsStyle="info">
-                  Submit User
-                </Button>
-              </FormGroup>
-            </form>
-          </Modal.Body>
-        </Modal>
+        <Login
+          renderModal={this.state.renderModal}
+          submit={this.submitHandler}
+          modalUser={this.state.modalUser}
+          nameHandler={this.nameHandler}
+          xboxHandler={this.xboxHandler}
+        />
       </Grid>
     );
   }
