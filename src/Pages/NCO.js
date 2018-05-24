@@ -25,7 +25,8 @@ class NCO extends Component {
     },
     stopWatchRunning: false,
     timestamp: null,
-    allBoats: []
+    userList: [],
+    newUser: ''
   };
 
   componentWillMount() {
@@ -129,6 +130,14 @@ class NCO extends Component {
     });
   };
 
+  changeHandler = event => {
+    this.setState({ newName: event.target.value });
+  };
+  submit = () => {
+    let userList = { ...this.state.userList };
+    userList.push(this.state.newUser);
+    this.setState({ userList });
+  };
   nameHandler = event => {
     let modalUser = { ...this.state.modalUser };
     modalUser.name = event.target.value;
@@ -142,18 +151,16 @@ class NCO extends Component {
   formCrews = () => {
     let crewArray = [...this.state.usersLoggedIn];
     crewArray = _.shuffle(crewArray);
-    let allBoats = [];
     while (crewArray.length) {
-      allBoats.push(crewArray.splice(0, 4));
-    }
-    console.log(allBoats);
-    this.setState({ allBoats });
-    fire
-      .database()
-      .ref('/boats')
-      .set({
-        boats: allBoats
+      let newCrew = crewArray.splice(0, 4);
+      newCrew.map((item, index) => {
+        console.log('item', item, 'index', index);
+        fire
+          .database()
+          .ref('/boats/' + index)
+          .push(item);
       });
+    }
   };
 
   shuffleCrews = () => {
@@ -163,12 +170,12 @@ class NCO extends Component {
   };
 
   clearCrews = () => {
-    this.setState({ allBoats: [] });
+    this.setState({ boatCrews: [] });
     fire
       .database()
       .ref('/boats')
       .set({
-        boats: []
+        boatCrews: null
       });
   };
   render() {
@@ -199,10 +206,28 @@ class NCO extends Component {
             <Button bsSize="large" bsStyle="success" onClick={this.formCrews}>
               Form
             </Button>
-
+            <Button bsSize="large" bsStyle="success" onClick={this.clearCrews}>
+              Clear
+            </Button>
             <Row>
-              <UsersOnline usersLoggedIn={this.state.usersLoggedIn} />
+              <UsersOnline
+                usersLoggedIn={this.state.usersLoggedIn}
+                boatCrews={this.state.boatCrews}
+              />
               <Messages currentUser={this.state.currentUser} />
+              <input type="text" onChange={this.changeHandler} />{' '}
+              <Button
+                bsSize="large"
+                bsStyle="success"
+                onClick={this.submitName}
+              >
+                Submit Name
+              </Button>
+              {this.state.userList
+                ? this.state.userList.map(user => {
+                    return <h4> {user} </h4>;
+                  })
+                : null}
             </Row>
           </Grid>
         </Row>

@@ -21,6 +21,15 @@ class UsersOnline extends Component {
                   </div>
                 );
               })}
+              <Well>
+                {this.props.boatCrews ? (
+                  this.props.boatCrews.map((boat, index) => (
+                    <h3>You have been assigned to: Boat Crew {index} </h3>
+                  ))
+                ) : (
+                  <h5> Crews have not been assigned yet. Stand By </h5>
+                )}
+              </Well>
             </Panel.Body>
           </Panel>
         </Well>

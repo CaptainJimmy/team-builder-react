@@ -21,26 +21,43 @@ class Team extends Component {
     modalUser: {
       name: '',
       xbox: ''
-    }
+    },
+    boatCrews: []
   };
 
   componentWillMount() {
     let usersRef = fire
       .database()
       .ref('/users')
-      .orderByKey()
-      .limitToLast(40);
+      .orderByKey();
 
-    usersRef.on('child_added', snapshot => {
-      let newUser = {
-        user: snapshot.val().name,
-        xboxID: snapshot.val().xbox,
-        id: snapshot.key
-      };
-      let usersLoggedIn = [...this.state.usersLoggedIn];
-      usersLoggedIn.unshift(newUser);
-      this.setState({ usersLoggedIn });
+    usersRef.once('value').then(snapshot => {
+      snapshot.forEach(childSnap => {
+        let newUser = {
+          user: childSnap.val().name,
+          xboxID: childSnap.val().xbox,
+          id: childSnap.key
+        };
+        let usersLoggedIn = [...this.state.usersLoggedIn];
+        usersLoggedIn.unshift(newUser);
+        this.setState({ usersLoggedIn });
+      });
     });
+    fire
+      .database()
+      .ref('/boats')
+      .orderByKey()
+      .once('value')
+      .then(snapshot => {
+        snapshot.forEach(childSnap => {
+          console
+          if (childSnap.val()) {
+            let boatCrews = [...this.state.boatCrews];
+            boatCrews.push(childSnap.val().boatCrews);
+            this.setState({ boatCrews });
+          }
+        });
+      });
   }
   componentDidMount() {
     fire
@@ -112,7 +129,10 @@ class Team extends Component {
               users={this.state.usersLoggedIn.length}
             />
             <Row>
-              <UsersOnline usersLoggedIn={this.state.usersLoggedIn} />
+              <UsersOnline
+                usersLoggedIn={this.state.usersLoggedIn}
+                boatCrews={this.state.boatCrews}
+              />
               <Messages currentUser={this.state.currentUser} />
             </Row>
           </Grid>
